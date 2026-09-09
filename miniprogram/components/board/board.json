@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "coal-piece": "/components/coal-piece/coal-piece"
+  }
+}

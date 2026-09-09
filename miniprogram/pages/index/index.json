@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "coal-piece": "/components/coal-piece/coal-piece"
+  },
+  "navigationBarTitleText": "棋霸"
+}

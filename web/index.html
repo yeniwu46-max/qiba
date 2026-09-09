@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>棋霸 · QIBA</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="tsparticles" class="tsparticles" aria-hidden="true"></div>
+  <div class="stage-photo" aria-hidden="true"></div>
+  <div class="stage-grid" aria-hidden="true"></div>
+  <div class="stage-glow" aria-hidden="true"></div>
+  <div id="emoteLayer" class="emote-layer" aria-hidden="true"></div>
+
+  <div id="app">
+    <div class="top-strip">
+      <div class="ri-mark" aria-hidden="true"></div>
+      <span class="strip-id">QIBA // ONLINE OPS</span>
+      <span class="strip-status"><i></i>LINK READY</span>
+      <div class="strip-actions">
+        <button class="btn ghost sm" id="btnLogin" type="button"><span>登录</span></button>
+        <button class="btn ghost sm inbox-btn" id="btnInbox" type="button">
+          <span>消息</span>
+          <i class="inbox-badge hidden" id="inboxBadge">0</i>
+        </button>
+        <button class="btn ghost sm" id="btnSettings" type="button"><span>设置</span></button>
+      </div>
+    </div>
+
+    <section id="view-home" class="view view-home">
+      <aside class="room-settings-dock" id="roomSettingsDock">
+        <button class="room-settings-toggle" id="btnToggleRoomSettings" type="button" aria-expanded="false">
+          <span class="panel-code">01</span>
+          <span>房间设置</span>
+          <i class="chev" aria-hidden="true"></i>
+        </button>
+        <div class="room-settings-body collapsed" id="roomSettingsBody">
+          <div class="field">
+            <span class="label">公开 / 私密</span>
+            <div class="chips" id="visibilities"></div>
+          </div>
+          <div class="field">
+            <span class="label">作战类型</span>
+            <div class="chips" id="gameTypes"></div>
+          </div>
+          <div class="field">
+            <span class="label">行动模式</span>
+            <div class="chips" id="modes"></div>
+            <p class="hint soft hidden" id="youjinHint">五子棋 1v1：每局结束后赢家出题，输家真心话作答，拒答或超时扣除 3 件背包物品。</p>
+          </div>
+          <div class="field">
+            <span class="label">系列局数</span>
+            <div class="chips" id="rounds"></div>
+          </div>
+          <div class="field" id="boardScaleField">
+            <span class="label">棋盘规格</span>
+            <div class="chips" id="boardScales"></div>
+          </div>
+          <div class="field">
+            <span class="label">每回合倒计时</span>
+            <div class="chips" id="turnTimes"></div>
+          </div>
+          <label class="field">
+            <span class="label">自定义房间号（可选，4~6 位）</span>
+            <input id="customCode" maxlength="6" placeholder="留空则随机生成" />
+          </label>
+          <label class="field">
+            <span class="label">进房口令（可选，4~8 位）</span>
+            <input id="joinPassInput" maxlength="8" placeholder="留空则无需口令" autocomplete="off" />
+          </label>
+          <label class="field switch-row">
+            <span class="label">人机补位（空位由 AI 填）</span>
+            <input type="checkbox" id="fillBotsToggle" />
+          </label>
+          <label class="field switch-row">
+            <span class="label">天象（天气棋盘事件）</span>
+            <input type="checkbox" id="celestialToggle" />
+          </label>
+          <p class="hint soft" id="celestialHint">道具赛 / 外援赛 / 公开 2v2 默认开启；私密 1v1 默认关闭，避免影响正经对局。</p>
+          <div class="field">
+            <span class="label">友谊赌注（可选）</span>
+            <div class="chips" id="friendshipStakes"></div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="home-center">
+        <header class="hero">
+          <img class="brand-mark" src="/assets/brand-mark.png" alt="棋霸" width="168" height="168" />
+          <div class="hero-kicker">RHODES-STYLE TERMINAL</div>
+          <h1 class="brand">
+            <span class="brand-cn">棋霸</span>
+            <span class="brand-en">QIBA</span>
+          </h1>
+          <p class="tagline">五子 / 黑白 / 围棋 / 国际跳棋 / 飞行棋</p>
+          <div class="hero-line" aria-hidden="true"></div>
+          <p class="season-chip" id="homeSeasonChip">赛季加载中…</p>
+        </header>
+
+        <div class="home-actions">
+          <button class="btn primary home-cta" id="btnQuickMatch" type="button"><span>快速匹配</span></button>
+          <button class="btn home-cta" id="btnWorldChannel" type="button"><span>世界频道</span></button>
+          <button class="btn home-cta" id="btnPractice" type="button"><span>人机练习</span></button>
+          <button class="btn home-cta" id="btnPuzzles" type="button"><span>残局挑战</span></button>
+          <div class="home-sub-actions">
+            <button class="btn ghost sm" id="btnFriends" type="button"><span>好友</span></button>
+            <button class="btn ghost sm" id="btnClubs" type="button"><span>棋社</span></button>
+            <button class="btn ghost home-cta" id="btnOpenBoard" type="button"><span>冲分榜</span></button>
+          </div>
+        </div>
+        <p class="hint" id="homeHint"></p>
+        <p class="home-auth-tip" id="homeAuthTip"></p>
+      </div>
+    </section>
+
+    <section id="view-profile" class="view hidden">
+      <div class="home-center profile-page">
+        <div class="panel cut">
+          <div class="panel-head">
+            <span class="panel-code">ID</span>
+            <span>个人档案</span>
+          </div>
+
+          <label class="field">
+            <span class="label">昵称</span>
+            <input id="profileNameInput" maxlength="12" placeholder="输入昵称" />
+          </label>
+          <label class="field">
+            <span class="label">个性签名</span>
+            <input id="profileSignatureInput" maxlength="40" placeholder="一句话介绍自己" />
+          </label>
+
+          <div class="field">
+            <span class="label">装饰棋子 · 煤球涂装</span>
+            <div class="skins" id="profileSkins"></div>
+          </div>
+
+          <div class="archive-rank" id="archiveRank">一阶</div>
+          <p class="archive-next" id="archiveNext">距离下一阶还需 — 胜</p>
+          <div class="rank-bar"><i id="archiveRankBar"></i></div>
+          <div class="season-panel" id="archiveSeason"></div>
+
+          <div class="daily-panel cut">
+            <div class="panel-head compact">
+              <span class="panel-code">DAY</span>
+              <span>每日任务</span>
+            </div>
+            <div class="daily-list" id="profileDailyList"></div>
+          </div>
+
+          <div class="profile-stats archive-stats" id="archiveStats"></div>
+
+          <div class="quick-edit-panel cut">
+            <div class="panel-head compact">
+              <span class="panel-code">TXT</span>
+              <span>自定义快捷语</span>
+            </div>
+            <p class="hint soft">共 7 条，留空则使用默认句。保存档案时一并写入。</p>
+            <div class="quick-edit-list" id="quickEditList"></div>
+          </div>
+
+          <div class="inventory-panel">
+            <div class="panel-head compact">
+              <span class="panel-code">BAG</span>
+              <span>背包</span>
+            </div>
+            <div class="inventory-grid" id="inventoryGrid"></div>
+            <button class="btn ghost sm" id="btnBoardFromBag" type="button"><span>冲分榜</span></button>
+          </div>
+
+          <div class="recent-panel cut">
+            <div class="panel-head compact">
+              <span class="panel-code">REC</span>
+              <span>最近对局</span>
+            </div>
+            <div class="recent-list" id="archiveRecentList"></div>
+          </div>
+
+          <div class="lore-panel cut">
+            <div class="panel-head compact">
+              <span class="panel-code">LORE</span>
+              <span>档案传闻</span>
+            </div>
+            <div class="world-feed-list" id="archiveLoreList"></div>
+          </div>
+
+          <p class="hint" id="profileHint"></p>
+          <div class="actions">
+            <button class="btn primary" id="btnSaveProfile"><span>保存档案</span></button>
+            <button class="btn ghost" id="btnLogoutProfile" type="button"><span>退出登录</span></button>
+            <button class="btn ghost" id="btnBackHome"><span>返回首页</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-room" class="view hidden">
+      <header class="bar">
+        <div>
+          <div class="code-label">ROOM</div>
+          <div class="code" id="roomCode">------</div>
+          <div class="meta" id="roomMeta"></div>
+        </div>
+        <button class="btn ghost sm" id="btnCopy"><span>复制房间码</span></button>
+      </header>
+      <div class="spec-block" id="lobbySpecBlock" data-strip="spec">
+        <button type="button" class="spec-toggle" id="lobbySpecToggle" aria-expanded="true">
+          <span class="spec-label" id="specTitle">观战席</span>
+          <span class="spec-chev" aria-hidden="true"></span>
+        </button>
+        <div id="specs" class="spec-strip"></div>
+      </div>
+      <div class="spec-block" id="lobbyCommBlock" data-strip="commentator">
+        <button type="button" class="spec-toggle" id="lobbyCommToggle" aria-expanded="true">
+          <span class="spec-label" id="commTitle">解说席</span>
+          <span class="spec-chev" aria-hidden="true"></span>
+        </button>
+        <div id="commentators" class="spec-strip commentator-strip"></div>
+      </div>
+      <div class="panel cut">
+        <div class="panel-head">
+          <span class="panel-code">03</span>
+          <span>小队编成</span>
+        </div>
+        <h2 class="section-title">座位</h2>
+        <div id="seats" class="seats"></div>
+
+        <div class="garden-panel cut" id="roomGardenPanel">
+          <div class="panel-head compact">
+            <span class="panel-code">GDN</span>
+            <span>庭院</span>
+          </div>
+          <div class="rank-bar garden-bar"><i id="roomGardenBar"></i></div>
+          <p class="hint soft" id="roomGardenHint">成长值 0 / 100</p>
+        </div>
+
+        <div class="job-panel cut" id="roomJobPanel">
+          <div class="panel-head compact">
+            <span class="panel-code">JOB</span>
+            <span>席位职业</span>
+          </div>
+          <div class="chips" id="roomJobChips"></div>
+          <div class="actions compact">
+            <button class="btn sm" id="btnUseJob" type="button"><span>发动技能</span></button>
+          </div>
+          <p class="hint soft" id="roomJobHint">入座后可选择职业</p>
+        </div>
+
+        <div id="swapBanner" class="swap-banner hidden"></div>
+
+        <div class="lobby-chat cut">
+          <div class="panel-head compact">
+            <span class="panel-code">CHAT</span>
+            <span>房间聊天</span>
+          </div>
+          <div class="chat-feed" id="lobbyChatFeed"></div>
+          <div class="lobby-chat-input">
+            <div class="chat-emoji-wrap">
+              <button class="btn sm ghost" id="btnLobbyEmoji" type="button" title="表情贴纸" aria-expanded="false" aria-haspopup="true"><span>表情</span></button>
+              <div class="chat-emoji-picker hidden" id="lobbyEmojiPicker" role="menu"></div>
+            </div>
+            <input id="lobbyChatInput" maxlength="80" placeholder="大厅自由聊天…" />
+            <button class="btn sm" id="btnLobbyChat" type="button"><span>发送</span></button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="btnReady"><span>准备</span></button>
+          <button class="btn danger hidden" id="btnStart"><span>开始对局</span></button>
+          <button class="btn ghost hidden" id="btnFillBots" type="button"><span>人机补位</span></button>
+          <button class="btn ghost hidden" id="btnCelestial" type="button"><span>天象</span></button>
+          <button class="btn ghost hidden" id="btnGrudge" type="button"><span>了结</span></button>
+          <button class="btn ghost" id="btnLeaveRoom"><span>返回首页</span></button>
+        </div>
+        <p class="hint" id="roomHint"></p>
+      </div>
+    </section>
+
+    <section id="view-game" class="view hidden">
+      <header class="bar game-bar">
+        <div>
+          <div class="title" id="gameTitle">对局</div>
+          <div class="meta" id="turnInfo"></div>
+          <div class="weather-banner hidden" id="weatherBanner"></div>
+          <div class="garden-banner hidden" id="gameGardenBanner">
+            <span id="gameGardenLabel">庭院</span>
+            <div class="rank-bar garden-bar sm"><i id="gameGardenBar"></i></div>
+          </div>
+          <div class="mentor-banner hidden" id="mentorBanner">师傅指导中</div>
+          <div class="practice-banner hidden" id="practiceBanner">人机练习</div>
+          <div class="practice-banner hidden" id="puzzleBanner">残局挑战</div>
+        </div>
+        <div class="timer" id="timer">30</div>
+      </header>
+      <div class="spec-block" id="gameSpecBlock" data-strip="spec">
+        <button type="button" class="spec-toggle" id="gameSpecToggle" aria-expanded="true">
+          <span class="spec-label" id="gameSpecTitle">观战席</span>
+          <span class="spec-chev" aria-hidden="true"></span>
+        </button>
+        <div id="gameSpecs" class="spec-strip"></div>
+      </div>
+      <div class="spec-block" id="gameCommBlock" data-strip="commentator">
+        <button type="button" class="spec-toggle" id="gameCommToggle" aria-expanded="true">
+          <span class="spec-label" id="gameCommTitle">解说席</span>
+          <span class="spec-chev" aria-hidden="true"></span>
+        </button>
+        <div id="gameCommentators" class="spec-strip commentator-strip"></div>
+      </div>
+      <div class="board-shell cut">
+        <img id="boardThemeLayer" class="board-theme-layer" alt="" />
+        <div class="board-corners" aria-hidden="true"></div>
+        <canvas id="board" width="720" height="720"></canvas>
+        <div id="diceFx" class="dice-fx hidden" aria-hidden="true">
+          <div class="dice-scene">
+            <div id="diceCube" class="dice-cube">
+              <div class="dice-face dice-f1"><i></i></div>
+              <div class="dice-face dice-f2"><i></i><i></i></div>
+              <div class="dice-face dice-f3"><i></i><i></i><i></i></div>
+              <div class="dice-face dice-f4"><i></i><i></i><i></i><i></i></div>
+              <div class="dice-face dice-f5"><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="dice-face dice-f6"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+        </div>
+        <div id="danmakuLayer" class="danmaku-layer" aria-hidden="true"></div>
+      </div>
+      <div class="theme-dock cut hidden" id="themeDock"></div>
+      <div class="chat-dock cut">
+        <div class="chat-feed" id="chatFeed"></div>
+        <div class="chat-emotes" id="chatEmotes"></div>
+        <div class="chat-texts" id="chatTexts"></div>
+        <button class="btn sm ghost hidden" id="btnEditQuick" type="button"><span>自定义快捷语</span></button>
+        <div class="danmaku-input-row">
+          <input id="danmakuInput" maxlength="20" placeholder="弹幕" />
+          <button class="btn sm" id="btnDanmaku" type="button"><span>弹幕</span></button>
+        </div>
+      </div>
+      <p class="board-tip hidden" id="boardTip"></p>
+      <div class="prop-balance cut hidden" id="propBalance"></div>
+      <div class="toolbar" id="toolbar"></div>
+      <div class="gift-dock cut" id="giftDock"></div>
+      <p class="hint" id="gameHint"></p>
+
+      <div id="overlay" class="overlay hidden">
+        <div class="card cut settle-card">
+          <div class="panel-head">
+            <span class="panel-code" id="settleCode">END</span>
+            <span id="settleTitle">作战结算</span>
+          </div>
+          <div class="result" id="resultText">对局结束</div>
+          <div class="settle-score" id="settleScore"></div>
+          <div class="settle-meta" id="settleMeta"></div>
+          <div class="settle-teams" id="settleTeams"></div>
+          <div class="settle-gift" id="settleGift"></div>
+          <div class="emote-bar" id="emoteBar"></div>
+          <div class="emote-feed" id="emoteFeed"></div>
+          <div id="truthPrompt" class="truth-prompt hidden">
+            <p class="rematch-q" id="truthTitle">友尽赛 · 真心话</p>
+            <p class="hint" id="truthHint"></p>
+            <div id="truthChoices" class="truth-choices"></div>
+            <div id="truthCustom" class="truth-custom hidden">
+              <input id="truthAskInput" maxlength="40" placeholder="自己出题（40字内）" />
+              <button class="btn sm primary" id="btnTruthAsk" type="button"><span>出题</span></button>
+            </div>
+            <div id="truthAnswerBox" class="truth-custom hidden">
+              <textarea id="truthAnswerInput" maxlength="80" rows="3" placeholder="写下你的真心话"></textarea>
+              <div class="settle-actions rematch-actions">
+                <button class="btn primary" id="btnTruthAnswer" type="button"><span>回答</span></button>
+                <button class="btn ghost" id="btnTruthRefuse" type="button"><span>拒绝（扣 3 件背包）</span></button>
+              </div>
+            </div>
+            <p class="truth-result hidden" id="truthResult"></p>
+          </div>
+          <div id="rematchPrompt" class="rematch-prompt hidden">
+            <p class="rematch-q">再来一局？</p>
+            <div class="settle-actions rematch-actions">
+              <button class="btn primary" id="btnRematchYes" type="button"><span>好的</span></button>
+              <button class="btn ghost" id="btnRematchNo" type="button"><span>不用了</span></button>
+            </div>
+            <p class="hint" id="rematchHint"></p>
+          </div>
+          <div class="settle-actions">
+            <button class="btn primary hidden" id="btnNextRound"><span>下一局</span></button>
+            <button class="btn ghost" id="btnHome"><span>返回首页</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 世界频道：创建 / 加入 -->
+  <div id="worldChannelModal" class="overlay hidden">
+    <div class="card cut modal-card wide">
+      <div class="panel-head">
+        <span class="panel-code">WORLD</span>
+        <span>世界频道</span>
+      </div>
+      <div class="chips world-channel-tabs">
+        <button class="chip on" id="worldTabCreate" type="button">创建房间</button>
+        <button class="chip" id="worldTabJoin" type="button">加入房间</button>
+      </div>
+      <div id="worldCreatePane">
+        <p class="hint" id="worldCreateSummary"></p>
+        <button class="btn primary" id="btnCreate" type="button"><span>确认创建</span></button>
+      </div>
+      <div id="worldJoinPane" class="hidden">
+        <div class="join-row">
+          <input id="joinCode" maxlength="6" placeholder="ROOM CODE" />
+          <button class="btn primary" id="btnJoin" type="button"><span>加入</span></button>
+        </div>
+        <label class="field">
+          <span class="label">进房口令（若房间需要）</span>
+          <input id="joinPassJoin" maxlength="8" placeholder="4–8 位口令" autocomplete="off" />
+        </label>
+        <button class="btn ghost" id="btnWatch" type="button"><span>观战</span></button>
+        <button class="btn ghost" id="btnCommentate" type="button"><span>解说</span></button>
+        <div class="chips world-game-filters" id="worldGameFilters"></div>
+        <div class="world-list" id="worldList"></div>
+        <p class="hint" id="worldHint"></p>
+        <button class="btn ghost sm" id="btnRefreshWorld" type="button"><span>刷新公开房间</span></button>
+      </div>
+      <div class="world-feed cut" id="worldFeedPanel">
+        <div class="panel-head compact">
+          <span class="panel-code">LORE</span>
+          <span>世界传闻</span>
+        </div>
+        <div class="world-feed-list" id="worldFeedList"></div>
+      </div>
+      <p class="hint" id="joinHint"></p>
+      <button class="btn ghost sm" id="btnCloseWorldChannel" type="button"><span>关闭</span></button>
+    </div>
+  </div>
+
+  <!-- 进房口令弹窗 -->
+  <div id="passModal" class="overlay hidden">
+    <div class="card cut modal-card">
+      <div class="panel-head">
+        <span class="panel-code">PASS</span>
+        <span>进房口令</span>
+      </div>
+      <p class="hint">该房间需要口令才能加入</p>
+      <label class="field">
+        <span class="label">口令</span>
+        <input id="passModalInput" maxlength="8" placeholder="输入 4–8 位口令" autocomplete="off" />
+      </label>
+      <p class="hint" id="passModalHint"></p>
+      <div class="actions">
+        <button class="btn primary" id="btnPassConfirm" type="button"><span>确认加入</span></button>
+        <button class="btn ghost" id="btnPassCancel" type="button"><span>取消</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 七阶冲分 / 周胜场 -->
+  <div id="boardModal" class="overlay hidden">
+    <div class="card cut modal-card wide">
+      <div class="panel-head">
+        <span class="panel-code">RANK</span>
+        <span>公开榜</span>
+      </div>
+      <p class="season-chip" id="boardSeasonChip"></p>
+      <div class="chips" id="boardTabs"></div>
+      <div class="board-list" id="boardList"></div>
+      <p class="hint" id="boardHint"></p>
+      <div class="actions">
+        <button class="btn ghost sm" id="btnRefreshBoard" type="button"><span>刷新</span></button>
+        <button class="btn ghost sm" id="btnCloseBoard" type="button"><span>关闭</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置抽屉 -->
+  <div id="settingsModal" class="overlay hidden">
+    <div class="card cut modal-card settings-card">
+      <div class="panel-head">
+        <span class="panel-code">CFG</span>
+        <span>设置</span>
+      </div>
+      <label class="field switch-row">
+        <span class="label">音效</span>
+        <input type="checkbox" id="sfxToggle" />
+      </label>
+      <label class="field">
+        <span class="label">音效音量 <b id="volumeLabel">80</b></span>
+        <input type="range" id="volumeSlider" min="0" max="100" value="80" />
+      </label>
+      <label class="field switch-row">
+        <span class="label">震动</span>
+        <input type="checkbox" id="vibrateToggle" />
+      </label>
+      <label class="field switch-row">
+        <span class="label">背景音乐 BGM</span>
+        <input type="checkbox" id="bgmToggle" />
+      </label>
+      <label class="field">
+        <span class="label">BGM 音量 <b id="bgmVolumeLabel">10</b></span>
+        <input type="range" id="bgmVolumeSlider" min="0" max="100" value="10" />
+      </label>
+      <div class="field">
+        <span class="label">主题色</span>
+        <div class="chips" id="themeChips"></div>
+      </div>
+      <div class="field">
+        <span class="label">已屏蔽玩家</span>
+        <div class="mute-list" id="muteList"></div>
+        <p class="hint soft" id="muteHint">在聊天或档案中可屏蔽玩家，屏蔽后其聊天/弹幕/表情对本机隐藏。</p>
+      </div>
+      <button class="btn ghost" id="btnCloseSettings" type="button"><span>关闭</span></button>
+    </div>
+  </div>
+
+  <!-- 登录 / 注册 -->
+  <div id="authModal" class="overlay hidden">
+    <div class="card cut modal-card">
+      <div class="panel-head">
+        <span class="panel-code">AUTH</span>
+        <span id="authTitle">登录</span>
+      </div>
+      <label class="field">
+        <span class="label">账号</span>
+        <input id="authUsername" maxlength="24" placeholder="账号" autocomplete="username" />
+      </label>
+      <label class="field">
+        <span class="label">密码</span>
+        <input id="authPassword" type="password" maxlength="64" placeholder="密码（至少 6 位）" autocomplete="current-password" />
+      </label>
+      <p class="hint" id="authHint"></p>
+      <div class="actions">
+        <button class="btn primary" id="btnDoLogin" type="button"><span>登录</span></button>
+        <button class="btn" id="btnDoRegister" type="button"><span>注册</span></button>
+      </div>
+      <button class="btn ghost sm" id="btnForgot" type="button"><span>忘记密码</span></button>
+      <button class="btn ghost sm" id="btnLogout" type="button"><span>退出登录</span></button>
+      <button class="btn ghost sm" id="btnCloseAuth" type="button"><span>关闭</span></button>
+    </div>
+  </div>
+
+  <div id="forgotModal" class="overlay hidden">
+    <div class="card cut modal-card">
+      <div class="panel-head">
+        <span class="panel-code">HELP</span>
+        <span>忘记密码</span>
+      </div>
+      <p class="forgot-text">请联系管理员乌乌，微信 WUYENI82</p>
+      <button class="btn ghost" id="btnCloseForgot" type="button"><span>关闭</span></button>
+    </div>
+  </div>
+
+  <div id="profileModal" class="overlay hidden">
+    <div class="card cut profile-card">
+      <div class="panel-head">
+        <span class="panel-code">ID</span>
+        <span>干员档案</span>
+      </div>
+      <div class="profile-name" id="profileName">—</div>
+      <div class="profile-sign" id="profileSign"></div>
+      <div class="profile-rank" id="profileRank">一阶</div>
+      <p class="profile-next" id="profileNext"></p>
+      <div class="profile-stats" id="profileStats"></div>
+      <div class="profile-bond" id="profileBond"></div>
+      <button class="btn ghost hidden" id="btnMutePlayer" type="button"><span>屏蔽该玩家</span></button>
+      <button class="btn ghost hidden" id="btnMentorInvite" type="button"><span>收为徒弟</span></button>
+      <button class="btn ghost" id="btnCloseProfile"><span>关闭</span></button>
+    </div>
+  </div>
+
+  <div id="inboxModal" class="overlay hidden">
+    <div class="card cut modal-card">
+      <div class="panel-head">
+        <span class="panel-code">MSG</span>
+        <span>事务消息</span>
+      </div>
+      <p class="hint">收徒 / 拜师申请可在此快捷处理</p>
+      <div id="inboxList"></div>
+      <button class="btn ghost sm" id="btnCloseInbox" type="button"><span>关闭</span></button>
+    </div>
+  </div>
+
+  <div id="friendsModal" class="overlay hidden">
+    <div class="card cut modal-card wide">
+      <div class="panel-head">
+        <span class="panel-code">FRD</span>
+        <span>好友</span>
+      </div>
+      <div class="join-row">
+        <input id="friendSearch" maxlength="24" placeholder="按昵称搜索添加" />
+        <button class="btn sm primary" id="btnFriendSearch" type="button"><span>搜索</span></button>
+      </div>
+      <div class="board-list" id="friendSearchHits"></div>
+      <div class="panel-head compact"><span class="panel-code">LIST</span><span>我的好友</span></div>
+      <div class="board-list" id="friendList"></div>
+      <div id="mentorPendingBox"></div>
+      <p class="hint" id="friendHint"></p>
+      <button class="btn ghost sm" id="btnCloseFriends" type="button"><span>关闭</span></button>
+    </div>
+  </div>
+
+  <div id="clubModal" class="overlay hidden">
+    <div class="card cut modal-card wide">
+      <div class="panel-head">
+        <span class="panel-code">CLB</span>
+        <span>棋社</span>
+      </div>
+      <div id="clubMineBox"></div>
+      <div class="join-row">
+        <input id="clubNameInput" maxlength="12" placeholder="棋社名称" />
+        <input id="clubShortInput" maxlength="4" placeholder="简称" />
+        <button class="btn sm primary" id="btnClubCreate" type="button"><span>创建</span></button>
+      </div>
+      <div class="join-row">
+        <input id="clubJoinCode" maxlength="8" placeholder="加入码" />
+        <button class="btn sm" id="btnClubJoin" type="button"><span>加入</span></button>
+        <button class="btn sm ghost" id="btnClubLeave" type="button"><span>退出</span></button>
+      </div>
+      <div class="panel-head compact"><span class="panel-code">LINE</span><span>师徒谱</span></div>
+      <div id="clubLineageBox"></div>
+      <div class="panel-head compact"><span class="panel-code">TEAM</span><span>棋社榜</span></div>
+      <div class="board-list" id="clubRankList"></div>
+      <p class="hint" id="clubHint"></p>
+      <button class="btn ghost sm" id="btnCloseClub" type="button"><span>关闭</span></button>
+    </div>
+  </div>
+
+  <div id="puzzleModal" class="overlay hidden">
+    <div class="card cut modal-card wide">
+      <div class="panel-head">
+        <span class="panel-code">END</span>
+        <span>残局挑战</span>
+      </div>
+      <p class="hint">限时解题：解杀需在规定步数内连成五子（白方会按常规防守）；做活需挡住对方杀招。布局取自常见连珠冲四 / 活三棋型。</p>
+      <div class="board-list" id="puzzleList"></div>
+      <button class="btn ghost sm" id="btnClosePuzzles" type="button"><span>关闭</span></button>
+    </div>
+  </div>
+
+  <div id="inviteModal" class="overlay hidden">
+    <div class="card cut modal-card">
+      <div class="panel-head">
+        <span class="panel-code">INV</span>
+        <span>好友邀请</span>
+      </div>
+      <p class="hint" id="inviteText">有好友邀请你进入私密房间</p>
+      <div class="actions">
+        <button class="btn primary" id="btnInviteAccept" type="button"><span>接受</span></button>
+        <button class="btn ghost" id="btnInviteDecline" type="button"><span>忽略</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="matchQueueOverlay" class="overlay hidden">
+    <div class="card cut modal-card match-queue-card">
+      <div class="panel-head">
+        <span class="panel-code">Q</span>
+        <span>快速匹配</span>
+      </div>
+      <p class="match-queue-title" id="matchQueueTitle">正在寻找对手…</p>
+      <p class="match-queue-timer" id="matchQueueTimer">0 秒</p>
+      <button class="btn ghost" id="btnCancelMatch" type="button"><span>取消</span></button>
+    </div>
+  </div>
+
+  <div id="rankCeremony" class="overlay hidden rank-ceremony-overlay">
+    <div class="card cut rank-ceremony-card">
+      <div class="panel-head">
+        <span class="panel-code">RANK</span>
+        <span id="rankCeremonyKind">晋级</span>
+      </div>
+      <p class="rank-ceremony-fromto">
+        <b id="rankCeremonyFrom">一阶</b>
+        <span>→</span>
+        <b id="rankCeremonyTo">二阶</b>
+      </p>
+      <p class="hint" id="rankCeremonyHint"></p>
+      <button class="btn primary" id="btnCloseRankCeremony" type="button"><span>继续</span></button>
+    </div>
+  </div>
+
+  <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+
+  <div id="diceModal" class="overlay hidden">
+    <div class="card cut modal-card">
+      <div class="panel-head">
+        <span class="panel-code">DICE</span>
+        <span>遥控骰子</span>
+      </div>
+      <div class="chips" id="dicePicks"></div>
+      <button class="btn ghost sm" id="btnCloseDice" type="button"><span>取消</span></button>
+    </div>
+  </div>
+
+  <script src="/vendor/confetti.browser.min.js"></script>
+  <script src="/vendor/howler.min.js"></script>
+  <script src="/vendor/tsparticles.slim.bundle.min.js"></script>
+  <script src="/ws-config.js"></script>
+  <script src="/fx.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+{
+  "desc": "棋霸",
+  "rules": [{ "action": "allow", "page": "*" }]
+}

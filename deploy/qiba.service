@@ -1,0 +1,17 @@
+[Unit]
+Description=Qiba online board game
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/qiba/server
+Environment=NODE_ENV=production
+Environment=HOST=0.0.0.0
+Environment=PORT=3000
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

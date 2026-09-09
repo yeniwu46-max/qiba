@@ -1,0 +1,16 @@
+node_modules/
+.DS_Store
+*.log
+.miniprogram/
+project.private.config.json
+.vercel/
+.vscode/
+server/data/*.json
+server/data/*.bak
+.env
+.env.*
+*.pem
+*.key
+__pycache__/
+*.pyc
+

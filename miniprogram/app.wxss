@@ -1,0 +1,41 @@
+page {
+  --bg: #2b2118;
+  --bg2: #3d2f22;
+  --wood: #c4a574;
+  --wood-dark: #8b6914;
+  --ink: #f3e6d0;
+  --accent: #d4522a;
+  --line: rgba(243, 230, 208, 0.18);
+  background: radial-gradient(ellipse at top, #3d2f22 0%, #1a1510 70%);
+  color: var(--ink);
+  font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 32rpx;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  background: linear-gradient(180deg, #d4a574, #a67c52);
+  color: #1a1510;
+  font-weight: 600;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 2rpx solid var(--wood);
+  color: var(--ink);
+}
+
+.btn.danger {
+  background: linear-gradient(180deg, #e07050, #b03a22);
+  color: #fff;
+}
+
+.btn[disabled] {
+  opacity: 0.45;
+}

@@ -1,0 +1,111 @@
+.page {
+  padding: 40rpx;
+}
+
+.head {
+  margin-bottom: 32rpx;
+}
+
+.code {
+  font-size: 48rpx;
+  letter-spacing: 6rpx;
+  font-weight: 700;
+}
+
+.meta {
+  margin-top: 8rpx;
+  opacity: 0.7;
+  font-size: 26rpx;
+}
+
+.copy {
+  margin-top: 20rpx;
+  display: inline-flex;
+  width: auto;
+  padding: 12rpx 28rpx;
+}
+
+.section {
+  margin-top: 28rpx;
+}
+
+.label {
+  opacity: 0.7;
+  margin-bottom: 16rpx;
+  font-size: 26rpx;
+}
+
+.seats {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.seat {
+  background: rgba(0,0,0,0.25);
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  border: 2rpx solid rgba(243,230,208,0.12);
+}
+
+.seat-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 24rpx;
+  opacity: 0.75;
+  margin-bottom: 12rpx;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.ready {
+  font-size: 22rpx;
+  opacity: 0.6;
+}
+
+.ready.on {
+  color: #81c784;
+  opacity: 1;
+}
+
+.empty {
+  opacity: 0.5;
+  font-size: 26rpx;
+}
+
+.specs {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.spec {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 26rpx;
+}
+
+.actions {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.hint {
+  margin-top: 12rpx;
+  color: #ffab91;
+  font-size: 24rpx;
+  min-height: 40rpx;
+}

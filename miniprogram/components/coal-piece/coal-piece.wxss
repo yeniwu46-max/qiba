@@ -1,0 +1,37 @@
+.coal {
+  position: relative;
+  border-radius: 50%;
+  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.coal.dark {
+  background: radial-gradient(circle at 35% 30%, #4a4a4a, #111 70%);
+  border: 2rpx solid rgba(0, 0, 0, 0.5);
+}
+
+.coal.light {
+  background: radial-gradient(circle at 35% 30%, #fff8e7, #d9c3a0 70%);
+  border: 2rpx solid rgba(120, 90, 40, 0.35);
+}
+
+.core {
+  position: absolute;
+  top: 18%;
+  right: 18%;
+  bottom: 18%;
+  left: 18%;
+  border-radius: 50%;
+  background: var(--tone);
+  opacity: 0.88;
+}
+
+.shine {
+  position: absolute;
+  top: 12%;
+  left: 18%;
+  width: 28%;
+  height: 22%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+}

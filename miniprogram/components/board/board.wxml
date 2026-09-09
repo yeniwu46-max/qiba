@@ -1,0 +1,25 @@
+<view class="board-wrap">
+  <view class="board" style="--n:{{size}};">
+    <view class="grid-lines"></view>
+    <block wx:for="{{board}}" wx:for-item="row" wx:for-index="ri" wx:key="ri">
+      <view
+        wx:for="{{row}}"
+        wx:for-item="cell"
+        wx:for-index="ci"
+        wx:key="ci"
+        class="cell {{highlight && highlight.r===ri && highlight.c===ci ? 'hl' : ''}}"
+        style="width:{{100/size}}%;height:{{100/size}}%;left:{{ci*100/size}}%;top:{{ri*100/size}}%;"
+        data-r="{{ri}}"
+        data-c="{{ci}}"
+        bindtap="onTap"
+      >
+        <coal-piece
+          wx:if="{{cell}}"
+          color="{{cell}}"
+          skin="{{(skins[cell] || (cell===1 ? 'red' : 'blue'))}}"
+          size="{{size > 12 ? 36 : size > 8 ? 44 : 52}}"
+        />
+      </view>
+    </block>
+  </view>
+</view>

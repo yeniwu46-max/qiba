@@ -1,0 +1,4 @@
+<view class="coal {{color === 1 ? 'dark' : 'light'}}" style="width:{{size}}rpx;height:{{size}}rpx;--tone:{{tone}};">
+  <view class="core"></view>
+  <view class="shine"></view>
+</view>

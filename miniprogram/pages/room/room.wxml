@@ -1,0 +1,48 @@
+<view class="page" wx:if="{{state}}">
+  <view class="head">
+    <view class="code">房间码 {{state.code}}</view>
+    <view class="meta">{{gameLabel}} · {{modeLabel}}</view>
+    <view class="copy btn ghost" bindtap="copyCode">复制房间码</view>
+  </view>
+
+  <view class="section">
+    <view class="label">座位</view>
+    <view class="seats">
+      <view class="seat" wx:for="{{state.seats}}" wx:key="index">
+        <view class="seat-top">
+          <text>座位{{item.index + 1}}</text>
+          <text class="team">队{{item.team}} · {{item.color===1?'黑':'白'}}</text>
+        </view>
+        <view class="player" wx:if="{{item.player}}">
+          <coal-piece skin="{{item.player.skin}}" color="{{item.color}}" size="48" />
+          <view class="info">
+            <text>{{item.player.name}}</text>
+            <text class="ready {{item.ready?'on':''}}">{{item.ready?'已准备':'未准备'}}</text>
+          </view>
+        </view>
+        <view class="empty" wx:else>空位（等待加入）</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section" wx:if="{{state.mode==='aid' || state.spectators.length}}">
+    <view class="label">观战 / 外援</view>
+    <view class="specs">
+      <view class="spec" wx:for="{{state.spectators}}" wx:key="id">
+        <coal-piece skin="{{item.skin}}" color="{{1}}" size="40" />
+        <text>{{item.name}}（已代下{{item.aidUsed}}/5）</text>
+      </view>
+      <view wx:if="{{!state.spectators.length}}" class="empty">暂无观战者</view>
+    </view>
+  </view>
+
+  <view class="actions">
+    <view class="btn" wx:if="{{mySeat && !mySeat.ready}}" bindtap="ready">准备</view>
+    <view class="btn ghost" wx:if="{{mySeat && mySeat.ready}}" bindtap="unready">取消准备</view>
+    <view class="btn danger" wx:if="{{isHost}}" bindtap="start">开始对局</view>
+    <view class="hint">{{hint}}</view>
+  </view>
+</view>
+<view class="page" wx:else>
+  <view class="hint">等待房间状态…</view>
+</view>

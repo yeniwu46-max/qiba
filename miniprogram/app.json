@@ -1,0 +1,16 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/room/room",
+    "pages/game/game"
+  ],
+  "window": {
+    "navigationBarTitleText": "棋霸",
+    "navigationBarBackgroundColor": "#1a1510",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#2b2118",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

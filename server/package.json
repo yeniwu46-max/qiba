@@ -1,0 +1,15 @@
+{
+  "name": "qiba-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "棋霸联机 Demo 服务端",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node test/smoke.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

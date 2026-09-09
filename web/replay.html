@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>棋霸 · 复盘回放</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .replay-page {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+      position: relative;
+      z-index: 2;
+    }
+    .replay-page .brand {
+      margin-bottom: 8px;
+    }
+    .replay-meta-line {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .replay-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 12px;
+    }
+    .replay-controls input[type="range"] {
+      flex: 1;
+      min-width: 140px;
+      accent-color: var(--orange);
+    }
+    #replayCanvas {
+      width: min(100%, 720px);
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      background: #0b111b;
+      border: 1px solid var(--line);
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-photo" aria-hidden="true"></div>
+  <div class="stage-grid" aria-hidden="true"></div>
+  <div class="stage-glow" aria-hidden="true"></div>
+
+  <div class="replay-page">
+    <div class="top-strip">
+      <div class="ri-mark" aria-hidden="true"></div>
+      <span class="strip-id">QIBA // REPLAY</span>
+      <span class="strip-status"><i></i>READONLY</span>
+      <div class="strip-actions">
+        <a class="btn ghost sm" href="/"><span>返回首页</span></a>
+      </div>
+    </div>
+
+    <header class="hero" style="margin-top:20px">
+      <h1 class="brand">
+        <span class="brand-cn">棋谱回放</span>
+        <span class="brand-en">REPLAY</span>
+      </h1>
+      <p class="tagline" id="metaLine">加载中…</p>
+    </header>
+
+    <div class="board-shell cut">
+      <canvas id="replayCanvas" width="720" height="720"></canvas>
+    </div>
+
+    <div class="replay-controls cut" style="padding:12px;background:rgba(10,14,22,.82);border:1px solid var(--line);margin-top:12px">
+      <button class="btn ghost sm" id="btnPrev" type="button"><span>◀</span></button>
+      <input type="range" id="slider" min="0" max="0" value="0" />
+      <button class="btn ghost sm" id="btnNext" type="button"><span>▶</span></button>
+      <button class="btn ghost sm" id="btnPlay" type="button"><span>自动播放</span></button>
+      <span class="replay-meta" id="stepMeta">0/0</span>
+    </div>
+    <p class="hint" id="hint"></p>
+  </div>
+
+  <script>
+(() => {
+  const GAME_LABEL = { gomoku: '五子棋', reversi: '黑白棋', go: '围棋' };
+  let data = null;
+  let frames = [];
+  let idx = 0;
+  let playTimer = null;
+  const canvas = document.getElementById('replayCanvas');
+  const ctx = canvas.getContext('2d');
+  const boardTexture = new Image();
+  boardTexture.src = '/assets/board-texture.png';
+
+  function decodeData(param) {
+    const pad = param.length % 4 === 0 ? '' : '='.repeat(4 - (param.length % 4));
+    const b64 = param.replace(/-/g, '+').replace(/_/g, '/') + pad;
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  function emptyBoard(n) {
+    return Array.from({ length: n }, () => Array(n).fill(0));
+  }
+
+  function applyMove(board, move, gameType) {
+    if (!move || move.pass || move.r < 0) return board;
+    const next = board.map((row) => row.slice());
+    if (gameType === 'reversi') {
+      // 简化：仅落子染色；完整翻转需引擎。若有 boardHistory 则优先用
+      next[move.r][move.c] = move.color;
+      return next;
+    }
+    next[move.r][move.c] = move.color;
+    return next;
+  }
+
+  function buildFrames(payload) {
+    if (payload.boardHistory && payload.boardHistory.length) {
+      return payload.boardHistory;
+    }
+    const n = payload.boardSize || 15;
+    const list = [emptyBoard(n)];
+    let cur = emptyBoard(n);
+    (payload.moves || []).forEach((m) => {
+      cur = applyMove(cur, m, payload.gameType);
+      list.push(cur.map((row) => row.slice()));
+    });
+    return list;
+  }
+
+  function draw() {
+    if (!frames.length) return;
+    const board = frames[idx] || frames[frames.length - 1];
+    const n = board.length;
+    const W = canvas.width;
+    const pad = 28;
+    const step = (W - pad * 2) / (n - 1);
+    const move = (data.moves || [])[idx - 1];
+    ctx.clearRect(0, 0, W, W);
+    if (boardTexture.complete && boardTexture.naturalWidth) {
+      ctx.drawImage(boardTexture, 0, 0, W, W);
+      ctx.fillStyle = 'rgba(7, 12, 20, 0.28)';
+      ctx.fillRect(0, 0, W, W);
+    } else {
+      ctx.fillStyle = '#121926';
+      ctx.fillRect(0, 0, W, W);
+    }
+    ctx.strokeStyle = 'rgba(79, 210, 255, 0.22)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < n; i += 1) {
+      const p = pad + i * step;
+      ctx.beginPath();
+      ctx.moveTo(pad, p);
+      ctx.lineTo(W - pad, p);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p, pad);
+      ctx.lineTo(p, W - pad);
+      ctx.stroke();
+    }
+    for (let r = 0; r < n; r += 1) {
+      for (let c = 0; c < n; c += 1) {
+        const cell = board[r][c];
+        if (!cell) continue;
+        const x = pad + c * step;
+        const y = pad + r * step;
+        const radius = Math.max(8, step * 0.42);
+        const g = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, radius * 0.1, x, y, radius);
+        if (cell === 1) {
+          g.addColorStop(0, '#4a4a4a');
+          g.addColorStop(1, '#111');
+        } else {
+          g.addColorStop(0, '#fff8e7');
+          g.addColorStop(1, '#d9c3a0');
+        }
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = g;
+        ctx.fill();
+        if (move && move.r === r && move.c === c) {
+          ctx.beginPath();
+          ctx.arc(x, y, radius + 3, 0, Math.PI * 2);
+          ctx.strokeStyle = '#ff6a00';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+      }
+    }
+    const max = frames.length - 1;
+    document.getElementById('slider').value = String(idx);
+    document.getElementById('stepMeta').textContent = `${idx}/${max}`;
+  }
+
+  function setIdx(v) {
+    const max = Math.max(0, frames.length - 1);
+    idx = Math.max(0, Math.min(max, v));
+    draw();
+  }
+
+  function stopPlay() {
+    if (playTimer) {
+      clearInterval(playTimer);
+      playTimer = null;
+      document.getElementById('btnPlay').innerHTML = '<span>自动播放</span>';
+    }
+  }
+
+  async function boot() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const raw = params.get('data');
+    try {
+      if (id) {
+        const res = await fetch(`/api/replay/${encodeURIComponent(id)}`);
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || '加载失败');
+        data = json.replay;
+      } else if (raw) {
+        data = decodeData(raw);
+      } else {
+        throw new Error('缺少棋谱参数 data 或 id');
+      }
+      frames = buildFrames(data);
+      document.getElementById('slider').max = String(Math.max(0, frames.length - 1));
+      idx = frames.length - 1;
+      const gt = GAME_LABEL[data.gameType] || data.gameType;
+      const win = data.winner === 0 ? '平局' : (data.winner === 1 ? '黑胜' : (data.winner === 2 ? '白胜' : '未知'));
+      document.getElementById('metaLine').textContent =
+        `${gt} · ${data.boardSize || '?'}路 · ${ (data.moves || []).length } 手 · ${win}`;
+      draw();
+    } catch (e) {
+      document.getElementById('metaLine').textContent = '无法加载棋谱';
+      document.getElementById('hint').textContent = e.message || String(e);
+    }
+  }
+
+  document.getElementById('btnPrev').onclick = () => { stopPlay(); setIdx(idx - 1); };
+  document.getElementById('btnNext').onclick = () => { stopPlay(); setIdx(idx + 1); };
+  document.getElementById('slider').oninput = (e) => { stopPlay(); setIdx(Number(e.target.value)); };
+  document.getElementById('btnPlay').onclick = () => {
+    if (playTimer) {
+      stopPlay();
+      return;
+    }
+    document.getElementById('btnPlay').innerHTML = '<span>暂停</span>';
+    playTimer = setInterval(() => {
+      if (idx >= frames.length - 1) {
+        stopPlay();
+        return;
+      }
+      setIdx(idx + 1);
+    }, 700);
+  };
+  boardTexture.onload = () => draw();
+  boot();
+})();
+  </script>
+</body>
+</html>

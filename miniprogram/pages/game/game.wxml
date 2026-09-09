@@ -1,0 +1,48 @@
+<view class="page" wx:if="{{state}}">
+  <view class="top">
+    <view class="left">
+      <text class="title">{{gameLabel}}</text>
+      <text class="sub">{{modeLabel}} · 房间 {{state.code}}</text>
+    </view>
+    <view class="timer {{remain<=5?'urgent':''}}">{{remain}}s</view>
+  </view>
+
+  <view class="turn">
+    当前：队{{currentTeam}} · {{state.turnColor===1?'黑':'白'}}
+    <text wx:if="{{currentName}}">（{{currentName}}）</text>
+    <text wx:if="{{state.aidRequest}}" class="aid-tag">外援请求中</text>
+  </view>
+
+  <board
+    board="{{state.board}}"
+    size="{{state.boardSize}}"
+    skins="{{skinMap}}"
+    disabled="{{!canPlace}}"
+    bind:place="onPlace"
+  />
+
+  <view class="toolbar">
+    <view class="btn ghost" bindtap="undo" wx:if="{{mySeat}}">悔棋×{{mySeat.undoLeft}}</view>
+    <view class="btn ghost" bindtap="pass" wx:if="{{state.gameType==='go' && canPlace}}">停一手</view>
+    <view class="btn ghost" bindtap="requestAid" wx:if="{{canRequestAid}}">请求外援</view>
+    <view class="btn danger" bindtap="cancelAid" wx:if="{{canCancelAid}}">取消外援</view>
+  </view>
+
+  <view class="props" wx:if="{{state.mode==='props' && mySeat}}">
+    <view class="label">道具</view>
+    <view class="prop-row">
+      <view class="btn" bindtap="useProp" data-prop="swallow">吞噬×{{mySeat.props.swallow}}</view>
+      <view class="btn" bindtap="useProp" data-prop="timeCut">压时×{{mySeat.props.timeCut}}</view>
+      <view class="btn" bindtap="useProp" data-prop="undoPlus">加悔×{{mySeat.props.undoPlus}}</view>
+    </view>
+  </view>
+
+  <view class="aid-hint" wx:if="{{canAidMove}}">你是外援，请点击棋盘代下（已用 {{aidUsed}}/5）</view>
+
+  <view class="overlay" wx:if="{{state.phase==='finished'}}">
+    <view class="card">
+      <view class="result">{{resultText}}</view>
+      <view class="btn" bindtap="backHome">返回首页</view>
+    </view>
+  </view>
+</view>
