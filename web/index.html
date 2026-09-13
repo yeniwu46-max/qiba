@@ -87,7 +87,7 @@
 
       <div class="home-center">
         <header class="hero">
-          <img class="brand-mark" src="/assets/brand-mark.png" alt="棋霸" width="168" height="168" />
+          <img class="brand-mark brand-ip" src="/assets/ip/qiba.png" alt="棋霸" width="220" height="264" />
           <div class="hero-kicker">RHODES-STYLE TERMINAL</div>
           <h1 class="brand">
             <span class="brand-cn">棋霸</span>
@@ -454,15 +454,36 @@
 
   <!-- 七阶冲分 / 周胜场 -->
   <div id="boardModal" class="overlay hidden">
-    <div class="card cut modal-card wide">
+    <div class="card cut modal-card board-shell-card">
       <div class="panel-head">
         <span class="panel-code">RANK</span>
         <span>公开榜</span>
       </div>
-      <p class="season-chip" id="boardSeasonChip"></p>
-      <div class="chips" id="boardTabs"></div>
-      <div class="board-list" id="boardList"></div>
-      <p class="hint" id="boardHint"></p>
+      <div class="board-layout">
+        <aside class="roster-pane" id="rosterPane">
+          <div class="panel-head compact">
+            <span class="panel-code">IP</span>
+            <span>角色档案</span>
+          </div>
+          <div class="chips roster-tabs" id="rosterTabs"></div>
+          <div class="roster-art">
+            <img id="rosterArt" src="/assets/ip/chef.png" alt="职业立绘" />
+          </div>
+          <div class="roster-name" id="rosterName">厨师 · 暖心司厨</div>
+          <p class="roster-level" id="rosterLevel">1 / 10 级</p>
+          <p class="hint soft" id="rosterIntro"></p>
+          <p class="roster-skill" id="rosterSkill"></p>
+          <div class="roster-attrs" id="rosterAttrs"></div>
+          <button class="btn primary sm" id="btnUpgradeJob" type="button"><span>升级</span></button>
+          <p class="hint" id="rosterHint"></p>
+        </aside>
+        <div class="board-main">
+          <p class="season-chip" id="boardSeasonChip"></p>
+          <div class="chips" id="boardTabs"></div>
+          <div class="board-list" id="boardList"></div>
+          <p class="hint" id="boardHint"></p>
+        </div>
+      </div>
       <div class="actions">
         <button class="btn ghost sm" id="btnRefreshBoard" type="button"><span>刷新</span></button>
         <button class="btn ghost sm" id="btnCloseBoard" type="button"><span>关闭</span></button>

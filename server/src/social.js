@@ -8,6 +8,35 @@ const JOB_META = {
   archaeologist: { id: 'archaeologist', label: '考古学家', icon: '⛏' },
 };
 
+const JOB_MAX_LEVEL = 10;
+
+const JOB_DOSSIER = {
+  chef: {
+    title: '暖心司厨',
+    intro: '棋房点心官。用饼干、蛋糕和棒棒糖把对局气氛烘热，不改棋规，只改心情。',
+    skill: '暖心点心：向房间分发氛围加成，持续随等级延长。',
+    attrNames: ['亲和', '补给', '氛围'],
+  },
+  spy: {
+    title: '窥子密探',
+    intro: '戴单片镜的情报棋手。专偷看上一手落子，冷却长、信息准。',
+    skill: '间谍窥视：对局中查看上一手提示，持续随等级延长。',
+    attrNames: ['洞察', '隐蔽', '冷静'],
+  },
+  gardener: {
+    title: '庭院守望',
+    intro: '给房间浇水的园丁。庭院攒满会开花，并把传闻写进世界频道。',
+    skill: '浇灌庭院：增加庭院生长值，满格开花并发布传闻。',
+    attrNames: ['生长', '耐心', '生机'],
+  },
+  archaeologist: {
+    title: '传闻发掘',
+    intro: '背着卷轴的考古棋手。从聊天、礼物和落子里挖出一条房间传闻。',
+    skill: '发掘传闻：从本房近期记录随机出土一条档案传闻。',
+    attrNames: ['博识', '发掘', '毅力'],
+  },
+};
+
 const PET_IDS = ['fox', 'cat', 'owl', 'slime'];
 const PET_META = {
   fox: { id: 'fox', label: '火狐', icon: '🦊' },
@@ -59,6 +88,69 @@ function normalizeJob(id) {
   return JOB_IDS.includes(id) ? id : '';
 }
 
+function clampJobLevel(n) {
+  const v = Number(n) || 1;
+  return Math.max(1, Math.min(JOB_MAX_LEVEL, Math.floor(v)));
+}
+
+function emptyJobLevels() {
+  const o = {};
+  JOB_IDS.forEach((id) => { o[id] = 1; });
+  return o;
+}
+
+function normalizeJobLevels(raw) {
+  const o = emptyJobLevels();
+  if (!raw || typeof raw !== 'object') return o;
+  JOB_IDS.forEach((id) => {
+    o[id] = clampJobLevel(raw[id]);
+  });
+  return o;
+}
+
+function jobAttrPoints(job, level) {
+  const L = clampJobLevel(level);
+  if (job === 'chef') return [6 + L * 2, 8 + L, 10 + L * 2];
+  if (job === 'spy') return [8 + L * 2, 7 + L * 2, 9 + L];
+  if (job === 'gardener') return [7 + L * 3, 8 + L, 6 + L * 2];
+  if (job === 'archaeologist') return [9 + L * 2, 6 + L * 2, 8 + L];
+  return [8 + L, 8 + L, 8 + L];
+}
+
+function jobPower(job, level) {
+  const id = normalizeJob(job);
+  const L = clampJobLevel(level);
+  const lore = JOB_DOSSIER[id] || JOB_DOSSIER.chef;
+  const baseCd = JOB_COOLDOWN_MS[id] || 20000;
+  const cooldownMs = Math.max(Math.round(baseCd * 0.4), baseCd - (L - 1) * 1400);
+  const names = lore.attrNames || ['力', '敏', '智'];
+  const values = jobAttrPoints(id, L);
+  return {
+    id,
+    label: (JOB_META[id] && JOB_META[id].label) || id,
+    icon: (JOB_META[id] && JOB_META[id].icon) || '',
+    title: lore.title,
+    intro: lore.intro,
+    skill: lore.skill,
+    portrait: id ? `/assets/ip/${id}.png` : '/assets/ip/qiba.png',
+    level: L,
+    maxLevel: JOB_MAX_LEVEL,
+    cooldownMs,
+    treatMs: TREAT_MS + (L - 1) * 1500,
+    peekMs: SPY_PEEK_MS + (L - 1) * 600,
+    water: GARDEN_WATER + (L - 1) * 2,
+    attrs: names.map((name, i) => ({ name, value: values[i] })),
+    costToNext: L >= JOB_MAX_LEVEL ? 0 : L,
+    costItem: 'cookies',
+    costLabel: '饼干',
+  };
+}
+
+function jobCards(levels) {
+  const lv = normalizeJobLevels(levels);
+  return JOB_IDS.map((id) => jobPower(id, lv[id]));
+}
+
 function normalizePet(id) {
   return PET_IDS.includes(id) ? id : 'fox';
 }
@@ -104,6 +196,8 @@ function rumorId() {
 module.exports = {
   JOB_IDS,
   JOB_META,
+  JOB_MAX_LEVEL,
+  JOB_DOSSIER,
   PET_IDS,
   PET_META,
   BGM_TRACKS,
@@ -119,6 +213,12 @@ module.exports = {
   PROFILE_LORE_MAX,
   TRUTH_QUESTIONS,
   normalizeJob,
+  clampJobLevel,
+  emptyJobLevels,
+  normalizeJobLevels,
+  jobAttrPoints,
+  jobPower,
+  jobCards,
   normalizePet,
   normalizeBgm,
   pickTruthQuestion,

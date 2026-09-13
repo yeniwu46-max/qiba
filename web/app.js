@@ -103,6 +103,55 @@
     { id: 'archaeologist', label: '⛏ 考古学家' },
   ];
   const GARDEN_BLOOM = 100;
+  const JOB_LORE = {
+    chef: {
+      title: '暖心司厨',
+      intro: '棋房点心官。用饼干、蛋糕和棒棒糖把对局气氛烘热，不改棋规，只改心情。',
+      skill: '暖心点心：向房间分发氛围加成，持续随等级延长。',
+      attrNames: ['亲和', '补给', '氛围'],
+      attrFn: (L) => [6 + L * 2, 8 + L, 10 + L * 2],
+    },
+    spy: {
+      title: '窥子密探',
+      intro: '戴单片镜的情报棋手。专偷看上一手落子，冷却长、信息准。',
+      skill: '间谍窥视：对局中查看上一手提示，持续随等级延长。',
+      attrNames: ['洞察', '隐蔽', '冷静'],
+      attrFn: (L) => [8 + L * 2, 7 + L * 2, 9 + L],
+    },
+    gardener: {
+      title: '庭院守望',
+      intro: '给房间浇水的园丁。庭院攒满会开花，并把传闻写进世界频道。',
+      skill: '浇灌庭院：增加庭院生长值，满格开花并发布传闻。',
+      attrNames: ['生长', '耐心', '生机'],
+      attrFn: (L) => [7 + L * 3, 8 + L, 6 + L * 2],
+    },
+    archaeologist: {
+      title: '传闻发掘',
+      intro: '背着卷轴的考古棋手。从聊天、礼物和落子里挖出一条房间传闻。',
+      skill: '发掘传闻：从本房近期记录随机出土一条档案传闻。',
+      attrNames: ['博识', '发掘', '毅力'],
+      attrFn: (L) => [9 + L * 2, 6 + L * 2, 8 + L],
+    },
+  };
+
+  function fallbackJobCard(id, level) {
+    const L = Math.max(1, Math.min(10, Number(level) || 1));
+    const lore = JOB_LORE[id] || JOB_LORE.chef;
+    const values = lore.attrFn(L);
+    return {
+      id,
+      label: (SEAT_JOBS.find((j) => j.id === id) || { label: id }).label.replace(/^[^\s]+\s/, ''),
+      title: lore.title,
+      intro: lore.intro,
+      skill: lore.skill,
+      portrait: `/assets/ip/${id}.png`,
+      level: L,
+      maxLevel: 10,
+      attrs: lore.attrNames.map((name, i) => ({ name, value: values[i] })),
+      costToNext: L >= 10 ? 0 : L,
+      costLabel: '饼干',
+    };
+  }
 
   function defaultCelestialOn() {
     if (state.gameType === 'draughts' || state.gameType === 'flying') return false;
@@ -460,6 +509,7 @@
     practiceThinking: false,
     practiceGen: 0,
     leaderboardTab: 'rush',
+    rosterJob: 'chef',
     season: null,
     fillBots: localStorage.getItem('qiba_fill_bots') === '1',
     celestial: localStorage.getItem('qiba_celestial') !== '0',
@@ -1213,6 +1263,60 @@
       $('boardList').innerHTML = '';
       $('boardHint').textContent = e.message || '排行榜加载失败';
     }
+    renderRoster();
+  }
+
+  function rosterCards() {
+    if (state.profile && Array.isArray(state.profile.jobCards) && state.profile.jobCards.length) {
+      return state.profile.jobCards;
+    }
+    const levels = (state.profile && state.profile.jobLevels) || {};
+    return ['chef', 'spy', 'gardener', 'archaeologist'].map((id) => fallbackJobCard(id, levels[id] || 1));
+  }
+
+  function renderRoster() {
+    const cards = rosterCards();
+    if (!state.rosterJob || !cards.some((c) => c.id === state.rosterJob)) state.rosterJob = 'chef';
+    renderChips('rosterTabs', cards.map((c) => ({ id: c.id, label: c.label })), state.rosterJob, (id) => {
+      state.rosterJob = id;
+      renderRoster();
+    });
+    const card = cards.find((c) => c.id === state.rosterJob) || cards[0];
+    if (!card) return;
+    const art = $('rosterArt');
+    if (art) {
+      art.src = card.portrait;
+      art.alt = card.label;
+    }
+    if ($('rosterName')) $('rosterName').textContent = `${card.label} · ${card.title}`;
+    if ($('rosterLevel')) $('rosterLevel').textContent = `${card.level} / ${card.maxLevel || 10} 级`;
+    if ($('rosterIntro')) $('rosterIntro').textContent = card.intro || '';
+    if ($('rosterSkill')) $('rosterSkill').textContent = card.skill || '';
+    const attrs = $('rosterAttrs');
+    if (attrs) {
+      attrs.innerHTML = (card.attrs || []).map((a) => {
+        const pct = Math.max(8, Math.min(100, Math.round((a.value / 40) * 100)));
+        return `<div class="roster-attr"><span>${a.name}</span><div class="roster-attr-bar"><i style="width:${pct}%"></i></div><b>${a.value}</b></div>`;
+      }).join('');
+    }
+    const btn = $('btnUpgradeJob');
+    const hint = $('rosterHint');
+    const maxed = card.level >= (card.maxLevel || 10);
+    if (btn) {
+      btn.classList.toggle('hidden', false);
+      btn.disabled = maxed || !isLoggedIn();
+      btn.querySelector('span').textContent = maxed
+        ? '已满级'
+        : (isLoggedIn() ? `升级（${card.costToNext}${card.costLabel || '饼干'}）` : '登录后升级');
+    }
+    if (hint) {
+      const bag = state.profile && (state.profile.cookies || 0);
+      hint.textContent = maxed
+        ? '该角色已达 10 级'
+        : (isLoggedIn()
+          ? `背包饼干 ${bag} · 升一级消耗 ${card.costToNext} 块`
+          : '登录后可用饼干升级，1～10 级属性不同');
+    }
   }
 
   function emptyBoard(n) {
@@ -1661,6 +1765,13 @@
       localStorage.setItem('qiba_signature', state.signature);
       fillArchive(msg.profile);
       toast('档案已保存');
+      return;
+    }
+    if (msg.type === 'jobUpgraded' && msg.profile) {
+      state.profile = { ...(state.profile || {}), ...msg.profile };
+      if (state.view === 'profile') fillArchive(state.profile);
+      renderRoster();
+      toast(`${msg.job === 'chef' ? '厨师' : msg.job === 'spy' ? '间谍' : msg.job === 'gardener' ? '园丁' : '考古学家'} 升到 ${msg.level} 级`);
       return;
     }
     if (msg.type === 'created' || msg.type === 'joined' || msg.type === 'rejoined' || msg.type === 'matched') {
@@ -5333,6 +5444,15 @@
     if ($('btnBoardFromBag')) $('btnBoardFromBag').onclick = () => openLeaderboard('rush');
     $('btnRefreshBoard').onclick = () => openLeaderboard(state.leaderboardTab);
     $('btnCloseBoard').onclick = () => $('boardModal').classList.add('hidden');
+    if ($('btnUpgradeJob')) {
+      $('btnUpgradeJob').onclick = () => {
+        if (!isLoggedIn()) {
+          toast('请先登录后再升级');
+          return;
+        }
+        send({ type: 'upgradeJob', uid: state.uid, name: state.name, job: state.rosterJob });
+      };
+    }
     $('boardModal').onclick = (e) => {
       if (e.target === $('boardModal')) $('boardModal').classList.add('hidden');
     };

@@ -30,6 +30,7 @@ const {
   ITEM_TYPES,
   getLeaderboard,
   saveProfile,
+  upgradeJob,
   inviteMentor,
   respondMentor,
   recordVsOutcome,
@@ -1035,6 +1036,20 @@ async function main() {
   socRoom.setSeatJob(socHost.playerId, 'chef');
   const treat = socRoom.useJob(socHost.playerId);
   ok(treat.ok && treat.socialBuffs.length >= 1, '厨师发放点心 buff');
+
+  section('职业升级');
+  const jobUid = `smoke_job_lv_${Date.now()}`;
+  grantItem({ id: jobUid, name: '升级测', item: 'cookies', n: 5 });
+  const lv1 = getProfileById(jobUid, '升级测');
+  ok(lv1.jobLevels.chef === 1 && lv1.jobCards[0].attrs.length === 3, '职业默认 1 级且有三维');
+  const a1 = lv1.jobCards.find((c) => c.id === 'chef').attrs[0].value;
+  const up = upgradeJob({ id: jobUid, name: '升级测', job: 'chef' });
+  ok(up.ok && up.level === 2, '厨师升到 2 级');
+  const lv2 = getProfileById(jobUid, '升级测');
+  const a2 = lv2.jobCards.find((c) => c.id === 'chef').attrs[0].value;
+  ok(a2 > a1, '升级后属性提高');
+  ok((lv2.cookies || 0) === (lv1.cookies || 0) - 1, '升 2 级消耗 1 饼干');
+  ok(!upgradeJob({ id: jobUid, name: '升级测', job: 'nope' }).ok, '未知职业拒绝');
   const snapSocial = socialMgr.serializeAll();
   const socialMgr2 = new RoomManager();
   socialMgr2.loadFromData(snapSocial);

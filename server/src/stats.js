@@ -104,6 +104,7 @@ function blank(extra = {}) {
     rivals: null,
     pet: 'fox',
     jobPref: '',
+    jobLevels: social.emptyJobLevels(),
     lore: [],
     ...extra,
   };
@@ -517,6 +518,8 @@ function toProfile(raw, fallbackName = '未知') {
     rivals: normalizeRival(s.rivals),
     pet: social.normalizePet(s.pet),
     jobPref: social.normalizeJob(s.jobPref),
+    jobLevels: social.normalizeJobLevels(s.jobLevels),
+    jobCards: social.jobCards(s.jobLevels),
     lore: normalizeLoreList(s.lore),
   };
 }
@@ -750,6 +753,7 @@ function saveProfile({ id, name, signature, quickChats, mutedUids, pet, jobPref 
   else next.pet = social.normalizePet(prev.pet);
   if (jobPref !== undefined) next.jobPref = social.normalizeJob(jobPref);
   else next.jobPref = social.normalizeJob(prev.jobPref);
+  next.jobLevels = social.normalizeJobLevels(prev.jobLevels);
   next.lore = normalizeLoreList(prev.lore);
   next.gameWins = normalizeGameWins(prev.gameWins);
   next.gameLosses = normalizeGameWins(prev.gameLosses);
@@ -1184,13 +1188,44 @@ function persistPrefs({ id, name, pet, jobPref }) {
     key = keyOf(name);
     cur = blank({ name });
   }
-  if (pet !== undefined) cur.pet = social.normalizePet(pet);
   if (jobPref !== undefined) cur.jobPref = social.normalizeJob(jobPref);
+  if (pet !== undefined) cur.pet = social.normalizePet(pet);
+  cur.jobLevels = social.normalizeJobLevels(cur.jobLevels);
   if (id) cur.id = id;
   if (name && !cur.name) cur.name = name;
   all[key] = cur;
   saveAll(all);
   return { ok: true, profile: toProfile({ ...cur, id: cur.id || key }, cur.name || name) };
+}
+
+function upgradeJob({ id, name, job }) {
+  const jobId = social.normalizeJob(job);
+  if (!jobId) return { ok: false, error: '未知职业' };
+  if (!id && !name) return { ok: false, error: '请先登录后再升级' };
+  const all = loadAll();
+  let found = findEntry(all, { id, name });
+  if (!found) return { ok: false, error: '档案不存在' };
+  const cur = { ...blank(), ...found.data };
+  const levels = social.normalizeJobLevels(cur.jobLevels);
+  const from = levels[jobId];
+  if (from >= social.JOB_MAX_LEVEL) return { ok: false, error: '已达 10 级' };
+  const cost = from;
+  const have = Number(cur.cookies) || 0;
+  if (have < cost) return { ok: false, error: `饼干不足，升到 ${from + 1} 级需要 ${cost} 块` };
+  cur.cookies = have - cost;
+  levels[jobId] = from + 1;
+  cur.jobLevels = levels;
+  if (id) cur.id = id;
+  if (name && !cur.name) cur.name = name;
+  all[found.key] = cur;
+  saveAll(all);
+  return {
+    ok: true,
+    job: jobId,
+    level: levels[jobId],
+    spent: cost,
+    profile: toProfile({ ...cur, id: cur.id || found.key }, cur.name || name),
+  };
 }
 
 function grantItem({ id, name, item, n = 1 }, allIn) {
@@ -1451,6 +1486,7 @@ module.exports = {
   appendWorldRumor,
   listWorldFeed,
   persistPrefs,
+  upgradeJob,
   normalizeLoreList,
   getLeaderboard,
   publicSeason,

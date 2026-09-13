@@ -9,6 +9,7 @@ const {
   getProfile,
   getProfileById,
   saveProfile,
+  upgradeJob,
   recordOutcome,
   getRecentMatches,
   getLeaderboard,
@@ -943,6 +944,18 @@ function handle(ws, type, msg) {
     });
     if (!result.ok) send(ws, 'error', { error: result.error });
     else send(ws, 'profileSaved', { profile: result.profile });
+    return;
+  }
+
+  if (type === 'upgradeJob') {
+    const uid = msg.uid || ws.uid;
+    if (!uid || !auth.getUserByUid(uid)) {
+      send(ws, 'error', { error: '请先登录后再升级职业' });
+      return;
+    }
+    const result = upgradeJob({ id: uid, name: msg.name, job: msg.job });
+    if (!result.ok) send(ws, 'error', { error: result.error });
+    else send(ws, 'jobUpgraded', { profile: result.profile, job: result.job, level: result.level, spent: result.spent });
     return;
   }
 

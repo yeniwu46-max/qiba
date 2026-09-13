@@ -22,6 +22,7 @@ const {
   appendLore,
   appendWorldRumor,
   persistPrefs,
+  upgradeJob,
 } = require('./stats');
 
 const SPEC_SEAT_COUNT = 5;
@@ -1710,11 +1711,29 @@ class Room {
     const raw = this.jobCooldowns.get(playerId) || {};
     const now = Date.now();
     const out = {};
+    const seat = this.findSeatByPlayer(playerId);
     Object.keys(social.JOB_COOLDOWN_MS).forEach((job) => {
-      const until = (Number(raw[job]) || 0) + social.JOB_COOLDOWN_MS[job];
+      const power = this.seatJobPower(seat, job);
+      const until = (Number(raw[job]) || 0) + power.cooldownMs;
       if (until > now) out[job] = until;
     });
     return out;
+  }
+
+  seatJobPower(seat, jobId) {
+    const job = social.normalizeJob(jobId || (seat && seat.job));
+    let level = 1;
+    const player = seat && seat.player;
+    if (job && player && player.uid) {
+      try {
+        const profile = getProfileById(player.uid, player.name);
+        const levels = social.normalizeJobLevels(profile && profile.jobLevels);
+        level = levels[job] || 1;
+      } catch {
+        level = 1;
+      }
+    }
+    return social.jobPower(job || 'chef', level);
   }
 
   touchJobCooldown(playerId, job) {
@@ -1725,7 +1744,9 @@ class Room {
 
   checkJobCooldown(playerId, job) {
     const raw = this.jobCooldowns.get(playerId) || {};
-    const until = (Number(raw[job]) || 0) + (social.JOB_COOLDOWN_MS[job] || 0);
+    const seat = this.findSeatByPlayer(playerId);
+    const power = this.seatJobPower(seat, job);
+    const until = (Number(raw[job]) || 0) + power.cooldownMs;
     const now = Date.now();
     if (until > now) {
       return { ok: false, error: `技能冷却中（${Math.ceil((until - now) / 1000)}秒）` };
@@ -1797,6 +1818,7 @@ class Room {
 
     const name = seat.player.name;
     const uid = seat.player.uid || null;
+    const power = this.seatJobPower(seat, job);
     let rumor = null;
     let chat = null;
 
@@ -1809,18 +1831,18 @@ class Room {
         label: '暖心点心',
         icon: '🍪',
         fromName: name,
-        until: now + social.TREAT_MS,
+        until: now + power.treatMs,
       });
-      chat = this.pushSystemChat(`${name} 分发暖心点心（${Math.round(social.TREAT_MS / 1000)} 秒氛围加成，不影响棋局）`);
+      chat = this.pushSystemChat(`${name} 分发暖心点心（${Math.round(power.treatMs / 1000)} 秒氛围加成，不影响棋局）`);
     } else if (job === 'spy') {
       if (this.phase !== 'playing') return { ok: false, error: '间谍仅在对局中可偷看上一手' };
       if (!this.lastMove) return { ok: false, error: '暂无落子可偷看' };
-      const until = Date.now() + social.SPY_PEEK_MS;
+      const until = Date.now() + power.peekMs;
       this.spyPeeks.set(playerId, { move: { ...this.lastMove }, until });
-      chat = this.pushSystemChat(`${name} 启动间谍窥视（${Math.round(social.SPY_PEEK_MS / 1000)} 秒）`);
+      chat = this.pushSystemChat(`${name} 启动间谍窥视（${Math.round(power.peekMs / 1000)} 秒）`);
     } else if (job === 'gardener') {
-      const { garden, bloomed } = this.touchGarden(social.GARDEN_WATER);
-      chat = this.pushSystemChat(`${name} 浇灌庭院 +${social.GARDEN_WATER}（${garden.growth}/${social.GARDEN_BLOOM}）`);
+      const { garden, bloomed } = this.touchGarden(power.water);
+      chat = this.pushSystemChat(`${name} 浇灌庭院 +${power.water}（${garden.growth}/${social.GARDEN_BLOOM}）`);
       if (bloomed) {
         rumor = this.publishRumor({
           uid,
@@ -2345,7 +2367,7 @@ class Room {
       garden: social.normalizeGarden(this.garden),
       roomLore: (this.roomLore || []).slice(0, 8),
       socialBuffs: this.activeSocialBuffs(),
-      jobCatalog: social.JOB_IDS.map((id) => ({ ...social.JOB_META[id], cooldownMs: social.JOB_COOLDOWN_MS[id] })),
+      jobCatalog: social.jobCards(youProfile && youProfile.jobLevels),
       jobCooldowns: this.jobCooldownsFor(forPlayerId),
       spyReveal: (() => {
         const peek = this.spyPeeks.get(forPlayerId);
